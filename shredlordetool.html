@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chris and Ian's Speed Trainer</title>
+    <style>
+        :root {
+            --primary: #00ff88;
+            --accent: #ffbb00;
+            --bg: #121212;
+            --card: #1e1e1e;
+            --danger: #ff4444;
+            --panel: #262626;
+        }
+        body {
+            background-color: var(--bg);
+            color: white;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .app-header {
+            text-align: center;
+            margin-bottom: 20px;
+            max-width: 400px;
+        }
+        .app-header h1 {
+            font-size: 18px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin: 0;
+            color: var(--primary);
+            text-shadow: 0 0 10px rgba(0,255,136,0.3);
+        }
+        .app-header p {
+            font-size: 10px;
+            color: #666;
+            margin: 5px 0 0 0;
+            letter-spacing: 1px;
+        }
+        .container {
+            background: var(--card);
+            padding: 30px;
+            border-radius: 24px;
+            width: 400px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+            border: 1px solid #333;
+        }
+        .nav-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+        }
+        .tab-link {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .tab-link.active { color: var(--primary); }
+
+        #status { color: var(--accent); font-weight: bold; height: 20px; font-size: 14px; margin-bottom: 5px; }
+        .bpm-display { font-size: 84px; font-weight: 900; color: var(--primary); margin: 0; line-height: 1; }
+        .beat-counter { font-size: 24px; color: white; margin-bottom: 15px; font-weight: 200; letter-spacing: 5px; }
+        .bpm-label { color: #555; font-size: 10px; letter-spacing: 4px; margin-bottom: 20px; text-transform: uppercase; }
+
+        .main-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        
+        #prefs-panel { display: none; text-align: left; background: var(--panel); padding: 20px; border-radius: 15px; margin-bottom: 20px; }
+
+        label { font-size: 10px; color: #888; text-transform: uppercase; font-weight: bold; display: block; margin-bottom: 5px; }
+        input[type="number"], input[type="text"], select {
+            width: 100%;
+            background: #121212;
+            border: 1px solid #444;
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+        .file-input { font-size: 10px; margin-top: 5px; width: 100%; color: #888; }
+
+        button#toggleBtn {
+            width: 100%;
+            padding: 20px;
+            background: var(--primary);
+            border: none;
+            border-radius: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 20px;
+        }
+        button.stop { background: var(--danger) !important; color: white; }
+
+        .progress-bar { height: 4px; background: #333; margin-top: 25px; border-radius: 2px; overflow: hidden; }
+        #beat-progress { width: 0%; height: 100%; background: var(--primary); transition: width 0.1s; }
+    </style>
+</head>
+<body>
+
+<div class="app-header">
+    <h1>Chris and Ian's speed trainer tool to become shred lordes</h1>
+    <p>VERSION 1.0 • EST. 2026</p>
+</div>
+
+<div class="container">
+    <div class="nav-tabs">
+        <div class="tab-link active" id="tab-home">Metronome</div>
+        <div class="tab-link" id="tab-prefs">Preferences</div>
+    </div>
+
+    <div id="home-view">
+        <div id="status">READY</div>
+        <div class="bpm-display" id="bpm-text">120</div>
+        <div class="beat-counter" id="beat-num">-</div>
+        <div class="bpm-label">BPM</div>
+
+        <div class="main-controls">
+            <div><label>Start BPM</label><input type="number" id="startBpm" value="120"></div>
+            <div><label>Add BPM</label><input type="number" id="step" value="5"></div>
+            <div><label>Beats / Bar</label><input type="number" id="timeSig" value="4"></div>
+            <div><label>Bars / Step</label><input type="number" id="barInterval" value="4"></div>
+        </div>
+    </div>
+
+    <div id="prefs-panel">
+        <label>Count-In Duration (Beats)</label>
+        <input type="number" id="countDuration" value="4" style="margin-bottom: 15px;">
+
+        <label>Custom Clicks</label>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:15px;">
+            <div><small style="color:#666">Main</small><input type="file" id="mainUpload" class="file-input" accept="audio/*"></div>
+            <div><small style="color:#666">Count-In</small><input type="file" id="countUpload" class="file-input" accept="audio/*"></div>
+        </div>
+
+        <label><input type="checkbox" id="initialCountIn" checked> Start Count-in</label><br>
+        <label><input type="checkbox" id="midCountIn" checked> Mid-jump Count-in</label>
+        
+        <div style="margin-top:15px; border-top: 1px solid #444; padding-top:15px;">
+            <label>Profile Manager</label>
+            <input type="text" id="profileName" placeholder="Profile Name" style="margin-bottom:5px;">
+            <button onclick="saveProfile()" style="width:100%; font-size:11px; padding:8px; margin-bottom:5px; cursor:pointer; background: var(--primary); border-radius: 5px; border:none; font-weight:bold;">SAVE PROFILE</button>
+            <select id="profileSelect" onchange="loadProfile()"><option value="">Load Profile...</option></select>
+        </div>
+    </div>
+
+    <button id="toggleBtn">START</button>
+    <div class="progress-bar"><div id="beat-progress"></div></div>
+</div>
+
+<script>
+    let audioCtx = null, mainBuffer = null, countBuffer = null;
+    let isPlaying = false, nextNoteTime = 0.0, timerID = null;
+    let currentBpm, barInterval, step, timeSig, beatInBar = 0, barsElapsed = 0;
+    let countingIn = false;
+
+    // UI elements
+    const statusDiv = document.getElementById('status');
+    const beatNumDiv = document.getElementById('beat-num');
+    const progressDiv = document.getElementById('beat-progress');
+
+    // Tab Logic
+    document.getElementById('tab-home').onclick = function() {
+        document.getElementById('home-view').style.display = 'block';
+        document.getElementById('prefs-panel').style.display = 'none';
+        this.classList.add('active');
+        document.getElementById('tab-prefs').classList.remove('active');
+    };
+    document.getElementById('tab-prefs').onclick = function() {
+        document.getElementById('home-view').style.display = 'none';
+        document.getElementById('prefs-panel').style.display = 'block';
+        this.classList.add('active');
+        document.getElementById('tab-home').classList.remove('active');
+    };
+
+    // Profile Logic
+    function saveProfile() {
+        const name = document.getElementById('profileName').value;
+        if (!name) return alert("Please enter a name");
+        const settings = {
+            startBpm: document.getElementById('startBpm').value,
+            step: document.getElementById('step').value,
+            timeSig: document.getElementById('timeSig').value,
+            barInterval: document.getElementById('barInterval').value,
+            countDur: document.getElementById('countDuration').value,
+            initIn: document.getElementById('initialCountIn').checked,
+            midIn: document.getElementById('midCountIn').checked
+        };
+        localStorage.setItem('metro_' + name, JSON.stringify(settings));
+        updateProfileList();
+        alert("Profile '" + name + "' Saved!");
+    }
+
+    function updateProfileList() {
+        const select = document.getElementById('profileSelect');
+        select.innerHTML = '<option value="">Load Profile...</option>';
+        for (let i = 0; i < localStorage.length; i++) {
+            let key = localStorage.key(i);
+            if (key.startsWith('metro_')) {
+                let name = key.replace('metro_', '');
+                select.innerHTML += `<option value="${name}">${name}</option>`;
+            }
+        }
+    }
+
+    function loadProfile() {
+        const name = document.getElementById('profileSelect').value;
+        if (!name) return;
+        const s = JSON.parse(localStorage.getItem('metro_' + name));
+        document.getElementById('startBpm').value = s.startBpm;
+        document.getElementById('step').value = s.step;
+        document.getElementById('timeSig').value = s.timeSig;
+        document.getElementById('barInterval').value = s.barInterval;
+        document.getElementById('countDuration').value = s.countDur;
+        document.getElementById('initialCountIn').checked = s.initIn;
+        document.getElementById('midCountIn').checked = s.midIn;
+    }
+
+    // Audio Engine
+    async function loadSound(file) {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const ab = await file.arrayBuffer();
+        return await audioCtx.decodeAudioData(ab);
+    }
+
+    document.getElementById('mainUpload').onchange = async (e) => { if(e.target.files[0]) mainBuffer = await loadSound(e.target.files[0]); };
+    document.getElementById('countUpload').onchange = async (e) => { if(e.target.files[0]) countBuffer = await loadSound(e.target.files[0]); };
+
+    function playSound(time, isAccent, isCounting) {
+        let buf = isCounting ? countBuffer : mainBuffer;
+        if (buf) {
+            const s = audioCtx.createBufferSource(); s.buffer = buf;
+            const g = audioCtx.createGain(); g.gain.setValueAtTime(isAccent ? 1.0 : 0.6, time);
+            s.connect(g); g.connect(audioCtx.destination); s.start(time);
+        } else {
+            const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
+            o.type = isCounting ? 'triangle' : 'sine';
+            o.frequency.setValueAtTime(isCounting ? (isAccent ? 1800 : 1400) : (isAccent ? 1000 : 500), time);
+            g.gain.setValueAtTime(0.5, time); g.gain.exponentialRampToValueAtTime(0.001, time + 0.1);
+            o.connect(g); g.connect(audioCtx.destination); o.start(time); o.stop(time + 0.1);
+        }
+    }
+
+    function scheduler() {
+        while (nextNoteTime < audioCtx.currentTime + 0.1) {
+            const isAccent = (beatInBar === 0);
+            playSound(nextNoteTime, isAccent, countingIn);
+            
+            const localBeat = beatInBar;
+            const localTime = nextNoteTime;
+            const isLocalCounting = countingIn;
+
+            setTimeout(() => {
+                beatNumDiv.innerText = localBeat + 1;
+                let limit = isLocalCounting ? parseInt(document.getElementById('countDuration').value) : timeSig;
+                progressDiv.style.width = ((localBeat + 1) / limit * 100) + "%";
+                progressDiv.style.background = isLocalCounting ? "var(--accent)" : "var(--primary)";
+            }, (localTime - audioCtx.currentTime) * 1000);
+
+            nextNoteTime += (60.0 / currentBpm);
+            beatInBar++;
+            
+            let limit = countingIn ? parseInt(document.getElementById('countDuration').value) : timeSig;
+            if (beatInBar >= limit) {
+                beatInBar = 0;
+                if (countingIn) {
+                    countingIn = false;
+                    statusDiv.innerText = "GO!";
+                } else {
+                    barsElapsed++;
+                    if (barsElapsed >= barInterval) {
+                        currentBpm += parseInt(document.getElementById('step').value);
+                        barsElapsed = 0;
+                        document.getElementById('bpm-text').innerText = currentBpm;
+                        if (document.getElementById('midCountIn').checked) {
+                            countingIn = true;
+                            statusDiv.innerText = "NEXT LEVEL...";
+                        }
+                    }
+                }
+            }
+        }
+        timerID = setTimeout(scheduler, 25);
+    }
+
+    document.getElementById('toggleBtn').onclick = async function() {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') await audioCtx.resume();
+
+        if (isPlaying) {
+            clearTimeout(timerID); isPlaying = false;
+            this.innerText = "START"; this.classList.remove('stop');
+            statusDiv.innerText = "READY"; beatNumDiv.innerText = "-";
+        } else {
+            currentBpm = parseInt(document.getElementById('startBpm').value);
+            timeSig = parseInt(document.getElementById('timeSig').value);
+            barInterval = parseInt(document.getElementById('barInterval').value);
+            beatInBar = 0; barsElapsed = 0; isPlaying = true;
+            countingIn = document.getElementById('initialCountIn').checked;
+            this.innerText = "STOP"; this.classList.add('stop');
+            statusDiv.innerText = countingIn ? "COUNT-IN" : "GO!";
+            nextNoteTime = audioCtx.currentTime + 0.05;
+            scheduler();
+        }
+    };
+
+    updateProfileList();
+</script>
+</body>
+</html>
